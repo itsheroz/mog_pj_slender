@@ -4,15 +4,15 @@ using System.Collections.Generic;
 
 public class CollectPage : MonoBehaviour
 {
-    public GameObject collectText;
-    public AudioSource collectSound;
+    //public GameObject collectText;
+    public AudioClip collectSound;
     private GameObject page;
     private bool inReach;
     private GameObject gameLogic;
 
     void Start()
     {
-        collectText.SetActive(false);
+        //collectText.SetActive(false);
         inReach = false;
         gameLogic = GameObject.FindGameObjectWithTag("GameLogic");
         page = this.gameObject;
@@ -22,16 +22,24 @@ public class CollectPage : MonoBehaviour
     {
         if(other.gameObject.tag == "Reach")
         {
-            if (collectText != null) collectText.SetActive(true);
+            if (other != null)
+            {
+                //collectText = other.gameObject;
+                //collectText.SetActive(true);
+            } 
             inReach = true;
         }
     }
-
+    GameObject collectText;
     void OnTriggerExit(Collider other)
     {
         if(other.gameObject.tag == "Reach")
         {
-            if (collectText != null) collectText.SetActive(false);
+            if (other != null)
+            {
+                //collectText = null;
+                //collectText.SetActive(false);
+            }
             inReach = false;
         }
     }
@@ -48,9 +56,10 @@ public class CollectPage : MonoBehaviour
                     gl.pageCount++;
                 }
             }
-            collectSound.Play();
+            SoundManager.Instance.PlaySFX(collectSound);
             page.SetActive(false);
-            collectText.SetActive(false);
+            //if(collectText != null) 
+           //     collectText.SetActive(false);
             inReach = false;
         }
     }

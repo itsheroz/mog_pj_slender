@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Photon.Pun;
 using System;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviourPun
 {
     //camera
     public Camera playerCamera;
@@ -33,18 +33,33 @@ public class PlayerController : MonoBehaviour
     CharacterController characterController;
 
     //sound effects
-    public AudioSource cameraZoomSound;
+    public AudioClip cameraZoomSound;
 
     void Start()
     {
+        if (!photonView.IsMine)
+        {
+            // ปิดกล้องและ AudioListener ของผู้เล่นคนอื่น
+            if (playerCamera != null) playerCamera.gameObject.SetActive(false);
+            return;
+        }
+
         characterController = GetComponent<CharacterController>();
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        // ตั้งค่า defaultFOV ถ้ายังไม่ได้ตั้ง เพื่อป้องกันกล้องซูมเหลือ 0
+        if (defaultFOV == 0 && playerCamera != null)
+        {
+            defaultFOV = playerCamera.fieldOfView;
+        }
     }
 
     void Update()
     {
+        if (!photonView.IsMine) return;
+
         Vector3 forward = transform.TransformDirection(Vector3.forward);
         Vector3 right = transform.TransformDirection(Vector3.right);
         
@@ -83,12 +98,12 @@ public class PlayerController : MonoBehaviour
         if(Input.GetButtonDown("Fire2"))
         {
             isZooming = true;
-            cameraZoomSound.Play();
+            SoundManager.Instance.PlaySFX(cameraZoomSound);
         }
         if(Input.GetButtonUp("Fire2"))
         {
             isZooming = false;
-            cameraZoomSound.Play();
+            SoundManager.Instance.PlaySFX(cameraZoomSound);
         }
 
         if(isZooming)

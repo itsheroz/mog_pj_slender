@@ -1,7 +1,7 @@
 using UnityEngine;
-using UnityEngine.UIElements;
+using Photon.Pun;
 
-public class NewMonoBehaviourScript : MonoBehaviour
+public class SlendermanAI : MonoBehaviourPun
 {
     public Transform player;
     public float teleportDistance = 10f;
@@ -10,7 +10,6 @@ public class NewMonoBehaviourScript : MonoBehaviour
     [Range(0f, 1f)] public float ChaseProbability = 0.65f;
     public float rotationSpeed = 5f;
     public AudioClip teleportSound;
-    private AudioSource audioSource;
 
     public GameObject staticObject;
     public float staticObjectDistance = 5f;
@@ -25,13 +24,6 @@ public class NewMonoBehaviourScript : MonoBehaviour
         baseTeleportPosition = transform.position;
         TeleportTimer = teleportCooldown;
 
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-        }
-        audioSource.clip = teleportSound;
-
         if (staticObject == null)
         {
             staticObject.SetActive(false);
@@ -42,13 +34,23 @@ public class NewMonoBehaviourScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(player == null)
+        if (!PhotonNetwork.IsMasterClient)
         {
-            Debug.LogError("Player Transform is not assigned in the inspector.");
+            // Only the Master Client controls the AI
             return;
         }
+
+        // If we don't have a target or the target is inactive, find a new one.
+        if (player == null || !player.gameObject.activeInHierarchy)
+        {
+            FindNewPlayerTarget();
+        }
+
+        // If still no player, do nothing.
+        if (player == null) return;
+
         TeleportTimer -= Time.deltaTime;
-        
+
         if (TeleportTimer <= 0f)
         {
             if (returningToBase)
@@ -81,6 +83,23 @@ public class NewMonoBehaviourScript : MonoBehaviour
         }
     }
 
+    private void FindNewPlayerTarget()
+    {
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        if (players.Length > 0)
+        {
+            // Pick a random player to target
+            int randomIndex = Random.Range(0, players.Length);
+            player = players[randomIndex].transform;
+            Debug.Log("Slenderman is now targeting: " + player.name);
+        }
+        else
+        {
+            player = null; // No players found
+            Debug.Log("Slenderman can't find any players to target.");
+        }
+    }
+
     private void DecideTeleportAction()
     {
         float randomValue = Random.value;
@@ -100,15 +119,22 @@ public class NewMonoBehaviourScript : MonoBehaviour
         Vector3 randomPosition = player.position + Random.onUnitSphere * teleportDistance;
         randomPosition.y = transform.position.y; // Keep the same height
         transform.position = randomPosition;
-
-        audioSource.Play();
+        if(photonView!=null)
+            photonView.RPC("PlayTeleportSoundRPC", RpcTarget.All, transform.position);
     }
 
     private void TeleportToBaseSpot()
     {
         transform.position = baseTeleportPosition;
         returningToBase = true;
-        audioSource.Play();
+            if(photonView!=null)
+                photonView.RPC("PlayTeleportSoundRPC", RpcTarget.All, transform.position);
+    }
+
+    [PunRPC]
+    private void PlayTeleportSoundRPC(Vector3 position)
+    {
+        SoundManager.Instance.PlaySFXAtPosition(teleportSound, position);
     }
 
     private void RotateTowardsPlayer()

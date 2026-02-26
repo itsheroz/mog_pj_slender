@@ -1,13 +1,12 @@
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+
 
 public class Flashlight : MonoBehaviour
 {
     public GameObject flashlight;
 
-    public AudioSource turnOn;
-    public AudioSource turnOff;
+    public AudioClip turnOnSound;
+    public AudioClip turnOffSound;
 
     private bool on;
     private bool off;
@@ -23,14 +22,14 @@ public class Flashlight : MonoBehaviour
         if(off && Input.GetButtonDown("flashlight"))
         {
             flashlight.SetActive(true);
-            turnOn.Play();
+            SoundManager.Instance.PlaySFX(turnOnSound);
             off = false;
             on = true;
         }
         else if(on && Input.GetButtonDown("flashlight"))
         {
             flashlight.SetActive(false);
-            turnOff.Play();
+            SoundManager.Instance.PlaySFX(turnOffSound);
             off = true;
             on = false;
         }
