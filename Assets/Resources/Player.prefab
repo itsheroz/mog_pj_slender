@@ -224,7 +224,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6aed37713d1c9a47b6acae5b17b3211, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundManager
-  musicSource: {fileID: 0}
+  musicSource: {fileID: 2976151998181295925}
   sfxSource: {fileID: 2976151998181295925}
 --- !u!82 &2976151998181295925
 AudioSource:
@@ -613,7 +613,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   playerCamera: {fileID: 8395990527972568820}
   walkSpeed: 3
-  runSpeed: 5
+  runSpeed: 10
   jumpForce: 0
   gravity: 10
   lookSpeed: 2
@@ -622,6 +622,9 @@ MonoBehaviour:
   defaultFOV: 80
   zoomSmoothness: 1
   cameraZoomSound: {fileID: 8300000, guid: d5fc16470936fe84fa301055ad624778, type: 3}
+  countPage: {fileID: 3607091156456613880}
+  staticObject: {fileID: 7678804690749476761}
+  staticObjectDistance: 10
 --- !u!114 &3994771068831072897
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1194,11 +1197,11 @@ GameObject:
   - component: {fileID: 5319574312510637664}
   m_Layer: 0
   m_Name: Collect
-  m_TagString: Untagged
+  m_TagString: Collect
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8648331071630579725
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1482,7 +1485,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 75b6793d4022ca74a94c8c9b16b7010d, type: 3}
-  m_PlayOnAwake: 0
+  m_PlayOnAwake: 1
   m_Volume: 0.443
   m_Pitch: 1
   Loop: 0

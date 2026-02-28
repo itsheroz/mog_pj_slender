@@ -1,37 +1,46 @@
 using UnityEngine;
+using Photon.Pun;
 
-
-public class Flashlight : MonoBehaviour
+public class Flashlight : MonoBehaviourPun
 {
     public GameObject flashlight;
 
     public AudioClip turnOnSound;
     public AudioClip turnOffSound;
 
-    private bool on;
-    private bool off;
+    private bool isOn = false;
 
     void Start()
     {
-        off = true;
         flashlight.SetActive(false);
+        isOn = false;
     }
 
     void Update()
     {
-        if(off && Input.GetButtonDown("flashlight"))
+        // เฉพาะเจ้าของตัวละครเท่านั้นที่กดเปิด/ปิดได้
+        if (!photonView.IsMine) return;
+
+        if (Input.GetButtonDown("flashlight"))
         {
-            flashlight.SetActive(true);
-            SoundManager.Instance.PlaySFX(turnOnSound);
-            off = false;
-            on = true;
+            isOn = !isOn;
+            // ส่ง RPC ไปทุก client เพื่อให้เห็นไฟฉายเปิด/ปิดตรงกัน
+            photonView.RPC("ToggleFlashlightRPC", RpcTarget.All, isOn);
         }
-        else if(on && Input.GetButtonDown("flashlight"))
+    }
+
+    [PunRPC]
+    private void ToggleFlashlightRPC(bool on)
+    {
+        isOn = on;
+        flashlight.SetActive(on);
+
+        if (SoundManager.Instance != null)
         {
-            flashlight.SetActive(false);
-            SoundManager.Instance.PlaySFX(turnOffSound);
-            off = true;
-            on = false;
+            if (on)
+                SoundManager.Instance.PlaySFX(turnOnSound);
+            else
+                SoundManager.Instance.PlaySFX(turnOffSound);
         }
     }
 }

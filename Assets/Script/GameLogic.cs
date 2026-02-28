@@ -3,32 +3,50 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
+using Photon.Pun;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
+using Photon.Realtime;
 
-public class GameLogic : MonoBehaviour
+public class GameLogic : MonoBehaviourPunCallbacks
 {
-    public GameObject countPage;
     public int pageCount;
+
+    private const string PAGE_COUNT_KEY = "PageCount";
 
     void Start()
     {
         pageCount = 0;
-        
-        // Find countPage if not assigned
-        if (countPage == null)
+
+        // โหลด pageCount จาก Room Properties (กรณี late-join)
+        if (PhotonNetwork.InRoom)
         {
-            countPage = GameObject.Find("countPage");
+            object value;
+            if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(PAGE_COUNT_KEY, out value))
+            {
+                pageCount = (int)value;
+            }
         }
     }
 
-    void Update()
+    // ลบ Update() ออก — ไม่ต้องอัพเดท UI แล้ว (PlayerController ทำแทน)
+
+    public void AddPage()
     {
-        if (countPage != null)
+        pageCount++;
+
+        if (PhotonNetwork.InRoom)
         {
-            TextMeshProUGUI textComponent = countPage.GetComponent<TextMeshProUGUI>();
-            if (textComponent != null)
-            {
-                textComponent.text = pageCount + "/8";
-            }
+            Hashtable props = new Hashtable();
+            props[PAGE_COUNT_KEY] = pageCount;
+            PhotonNetwork.CurrentRoom.SetCustomProperties(props);
+        }
+    }
+
+    public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
+    {
+        if (propertiesThatChanged.ContainsKey(PAGE_COUNT_KEY))
+        {
+            pageCount = (int)propertiesThatChanged[PAGE_COUNT_KEY];
         }
     }
 }

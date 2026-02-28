@@ -1,66 +1,98 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Photon.Pun;
 
-public class CollectPage : MonoBehaviour
+public class CollectPage : MonoBehaviourPun
 {
-    //public GameObject collectText;
     public AudioClip collectSound;
-    private GameObject page;
     private bool inReach;
     private GameObject gameLogic;
+    private GameObject collectText; // อ้างอิง text "Collect" ของผู้เล่นที่อยู่ใกล้
 
     void Start()
     {
-        //collectText.SetActive(false);
         inReach = false;
         gameLogic = GameObject.FindGameObjectWithTag("GameLogic");
-        page = this.gameObject;
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if(other.gameObject.tag == "Reach")
+        if (other.gameObject.tag == "Reach")
         {
-            if (other != null)
-            {
-                //collectText = other.gameObject;
-                //collectText.SetActive(true);
-            } 
             inReach = true;
+
+            // หา "Collect" text จาก Player ที่เข้ามาใกล้
+            Transform playerRoot = other.transform.root;
+            Transform found = FindChildByName(playerRoot, "Collect");
+            if (found != null)
+            {
+                collectText = found.gameObject;
+                collectText.SetActive(true);
+            }
         }
     }
-    GameObject collectText;
+
     void OnTriggerExit(Collider other)
     {
-        if(other.gameObject.tag == "Reach")
+        if (other.gameObject.tag == "Reach")
         {
-            if (other != null)
-            {
-                //collectText = null;
-                //collectText.SetActive(false);
-            }
             inReach = false;
+
+            if (collectText != null)
+            {
+                collectText.SetActive(false);
+                collectText = null;
+            }
         }
     }
 
     void Update()
     {
-        if(inReach && Input.GetButtonDown("collect"))
+        if (inReach && Input.GetButtonDown("collect"))
         {
-            if (gameLogic != null)
+            if (collectText != null)
             {
-                GameLogic gl = gameLogic.GetComponent<GameLogic>();
-                if (gl != null)
-                {
-                    gl.pageCount++;
-                }
+                collectText.SetActive(false);
+                collectText = null;
             }
-            SoundManager.Instance.PlaySFX(collectSound);
-            page.SetActive(false);
-            //if(collectText != null) 
-           //     collectText.SetActive(false);
-            inReach = false;
+
+            photonView.RPC("CollectPageRPC", RpcTarget.All);
         }
+    }
+
+    /// <summary>
+    /// หา child ชื่อที่กำหนดจาก hierarchy ทั้งหมด (รวม inactive)
+    /// </summary>
+    private Transform FindChildByName(Transform parent, string name)
+    {
+        // GetComponentsInChildren(true) หาได้แม้ object จะ inactive อยู่
+        foreach (Transform child in parent.GetComponentsInChildren<Transform>(true))
+        {
+            if (child.name == name)
+            {
+                return child;
+            }
+        }
+        return null;
+    }
+
+    [PunRPC]
+    private void CollectPageRPC()
+    {
+        if (gameLogic != null)
+        {
+            GameLogic gl = gameLogic.GetComponent<GameLogic>();
+            if (gl != null)
+            {
+                gl.AddPage();
+            }
+        }
+
+        if (SoundManager.Instance != null)
+            SoundManager.Instance.PlaySFX(collectSound);
+
+        gameObject.SetActive(false);
+        inReach = false;
     }
 }

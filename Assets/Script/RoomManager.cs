@@ -1,11 +1,15 @@
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 using Photon.Pun;
+using Photon.Realtime;
 
 public class RoomManager : MonoBehaviourPunCallbacks
 {
     public string playerPrefabName = "Player";
+    public byte maxPlayers = 4;
+    public float spawnRadius = 3f; // รัศมีสุ่มตำแหน่ง spawn
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         Debug.Log("RoomManager Start");
@@ -22,19 +26,31 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public override void OnJoinedLobby()
     {
         base.OnJoinedLobby();
-        PhotonNetwork.JoinOrCreateRoom("test",null,null);
+
+        RoomOptions roomOptions = new RoomOptions();
+        roomOptions.MaxPlayers = maxPlayers;
+
+        PhotonNetwork.JoinOrCreateRoom("test", roomOptions, TypedLobby.Default);
     }
 
     public override void OnJoinedRoom()
     {
         base.OnJoinedRoom();
         Debug.Log("Joined Room");
-        PhotonNetwork.Instantiate(playerPrefabName, new Vector3(0, 2, 0), Quaternion.identity);
+
+        // สุ่มตำแหน่ง spawn เล็กน้อยเพื่อไม่ให้ผู้เล่นซ้อนกัน
+        Vector3 spawnPos = new Vector3(
+            Random.Range(-spawnRadius, spawnRadius),
+            2f,
+            Random.Range(-spawnRadius, spawnRadius)
+        );
+
+        PhotonNetwork.Instantiate(playerPrefabName, spawnPos, Quaternion.identity);
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void OnJoinRoomFailed(short returnCode, string message)
     {
-        
+        base.OnJoinRoomFailed(returnCode, message);
+        Debug.LogError("Join Room Failed: " + message);
     }
 }

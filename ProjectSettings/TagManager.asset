@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Reach
   - GameLogic
+  - Collect
+  - Slenderman
   layers:
   - Default
   - TransparentFX

@@ -1,7 +1,7 @@
 using UnityEngine;
 using Photon.Pun;
 
-public class SlendermanAI : MonoBehaviourPun
+public class SlendermanAI : MonoBehaviourPun, IPunObservable
 {
     public Transform player;
     public float teleportDistance = 10f;
@@ -11,75 +11,56 @@ public class SlendermanAI : MonoBehaviourPun
     public float rotationSpeed = 5f;
     public AudioClip teleportSound;
 
-    public GameObject staticObject;
-    public float staticObjectDistance = 5f;
+    // ลบ staticObject ออกแล้ว — ย้ายไปฝั่ง PlayerController แทน
 
     private Vector3 baseTeleportPosition;
     private float TeleportTimer;
     private bool returningToBase;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    // Network sync variables
+    private Vector3 networkPosition;
+    private Quaternion networkRotation;
+
     void Start()
     {
         baseTeleportPosition = transform.position;
         TeleportTimer = teleportCooldown;
-
-        if (staticObject == null)
-        {
-            staticObject.SetActive(false);
-            Debug.LogError("Static Object is not assigned in the inspector.");
-        }
+        networkPosition = transform.position;
+        networkRotation = transform.rotation;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (!PhotonNetwork.IsMasterClient)
+        if (PhotonNetwork.IsMasterClient)
         {
-            // Only the Master Client controls the AI
-            return;
-        }
-
-        // If we don't have a target or the target is inactive, find a new one.
-        if (player == null || !player.gameObject.activeInHierarchy)
-        {
-            FindNewPlayerTarget();
-        }
-
-        // If still no player, do nothing.
-        if (player == null) return;
-
-        TeleportTimer -= Time.deltaTime;
-
-        if (TeleportTimer <= 0f)
-        {
-            if (returningToBase)
+            if (player == null || !player.gameObject.activeInHierarchy)
             {
-                TeleportToBaseSpot();
-                returningToBase = false;
+                FindNewPlayerTarget();
             }
-            else
-            {
-                DecideTeleportAction();
-                TeleportTimer = teleportCooldown;
-            }
-        }
-        RotateTowardsPlayer();
 
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-        if(distanceToPlayer <= staticObjectDistance)
-        {
-            if(staticObject != null && !staticObject.activeSelf)
+            if (player == null) return;
+
+            TeleportTimer -= Time.deltaTime;
+
+            if (TeleportTimer <= 0f)
             {
-                staticObject.SetActive(true);
+                if (returningToBase)
+                {
+                    TeleportToBaseSpot();
+                    returningToBase = false;
+                }
+                else
+                {
+                    DecideTeleportAction();
+                    TeleportTimer = teleportCooldown;
+                }
             }
+            RotateTowardsPlayer();
         }
         else
         {
-            if(staticObject != null && staticObject.activeSelf)
-            {
-                staticObject.SetActive(false);
-            }
+            transform.position = Vector3.Lerp(transform.position, networkPosition, Time.deltaTime * 10f);
+            transform.rotation = Quaternion.Lerp(transform.rotation, networkRotation, Time.deltaTime * 10f);
         }
     }
 
@@ -88,14 +69,13 @@ public class SlendermanAI : MonoBehaviourPun
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         if (players.Length > 0)
         {
-            // Pick a random player to target
             int randomIndex = Random.Range(0, players.Length);
             player = players[randomIndex].transform;
             Debug.Log("Slenderman is now targeting: " + player.name);
         }
         else
         {
-            player = null; // No players found
+            player = null;
             Debug.Log("Slenderman can't find any players to target.");
         }
     }
@@ -117,9 +97,9 @@ public class SlendermanAI : MonoBehaviourPun
     private void TeleportNearPlayer()
     {
         Vector3 randomPosition = player.position + Random.onUnitSphere * teleportDistance;
-        randomPosition.y = transform.position.y; // Keep the same height
+        randomPosition.y = transform.position.y;
         transform.position = randomPosition;
-        if(photonView!=null)
+        if (photonView != null)
             photonView.RPC("PlayTeleportSoundRPC", RpcTarget.All, transform.position);
     }
 
@@ -127,25 +107,42 @@ public class SlendermanAI : MonoBehaviourPun
     {
         transform.position = baseTeleportPosition;
         returningToBase = true;
-            if(photonView!=null)
-                photonView.RPC("PlayTeleportSoundRPC", RpcTarget.All, transform.position);
+        if (photonView != null)
+            photonView.RPC("PlayTeleportSoundRPC", RpcTarget.All, transform.position);
     }
 
     [PunRPC]
     private void PlayTeleportSoundRPC(Vector3 position)
     {
-        SoundManager.Instance.PlaySFXAtPosition(teleportSound, position);
+        if (SoundManager.Instance != null)
+            SoundManager.Instance.PlaySFXAtPosition(teleportSound, position);
     }
 
     private void RotateTowardsPlayer()
     {
-        Vector3 directionToPlayer = player.position - transform.position;
-        directionToPlayer.y = 0f; // Keep the rotation on the horizontal plane
+        if (player == null) return;
 
-        if(directionToPlayer != Vector3.zero)
+        Vector3 directionToPlayer = player.position - transform.position;
+        directionToPlayer.y = 0f;
+
+        if (directionToPlayer != Vector3.zero)
         {
             Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(transform.position);
+            stream.SendNext(transform.rotation);
+        }
+        else
+        {
+            networkPosition = (Vector3)stream.ReceiveNext();
+            networkRotation = (Quaternion)stream.ReceiveNext();
         }
     }
 }
