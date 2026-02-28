@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Photon.Pun;
 using TMPro;
+using UnityEngine.UI;
 using System;
 
 public class PlayerController : MonoBehaviourPun, IPunObservable
@@ -46,6 +47,16 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     public GameObject staticObject;          // ลาก static effect object (child ของ Main Camera) เข้ามา
     public float staticObjectDistance = 5f;  // ระยะที่จะแสดง static effect
     private Transform slendermanTransform;   // เก็บ reference ของ Slenderman (หาตอน runtime)
+    private bool isInStaticRange = false;    // ตอนนี้อยู่ในระยะ static ไหม
+
+    // === HP System ===
+    [Header("HP System")]
+    public float maxHP = 100f;               // เลือดสูงสุด
+    public float damagePerSecond = 10f;      // ลดเลือดต่อวินาที (เมื่ออยู่ใกล้ Slenderman)
+    public float regenPerSecond = 5f;        // ฟื้นเลือดต่อวินาที (เมื่ออยู่ไกล)
+    public Image hpBar;                     // ลาก HP Bar (UI Image, ตั้ง Image Type = Filled) จาก Player prefab เข้ามา
+    private float currentHP;                 // เลือดปัจจุบัน
+    private bool isDead = false;             // ตายแล้วหรือยัง
 
     // Network sync variables
     private Vector3 networkPosition;
@@ -87,6 +98,11 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         {
             staticObject.SetActive(false);
         }
+
+        // ตั้งค่า HP เริ่มต้น
+        currentHP = maxHP;
+        isDead = false;
+        UpdateHPBar();
     }
 
     void Update()
@@ -97,6 +113,9 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
             transform.rotation = Quaternion.Lerp(transform.rotation, networkRotation, Time.deltaTime * 10f);
             return;
         }
+
+        // ถ้าตายแล้วไม่ทำอะไร
+        if (isDead) return;
 
         // === Movement ===
         Vector3 forward = transform.TransformDirection(Vector3.forward);
@@ -159,6 +178,9 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         // === Static Effect: เช็คระยะกับ Slenderman ===
         CheckSlendermanDistance();
 
+        // === HP: ลด/เพิ่มเลือดตามระยะ Slenderman ===
+        UpdateHP();
+
         // === Page Count UI: อัพเดทตัวเลข page ===
         UpdatePageCountUI();
     }
@@ -189,11 +211,13 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         {
             if (!staticObject.activeSelf)
                 staticObject.SetActive(true);
+            isInStaticRange = true;
         }
         else
         {
             if (staticObject.activeSelf)
                 staticObject.SetActive(false);
+            isInStaticRange = false;
         }
     }
 
@@ -222,6 +246,76 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
                 textComponent.text = gameLogicRef.pageCount + "/8";
             }
         }
+    }
+
+    /// <summary>
+    /// อัพเดท HP: ลดเลือดเมื่ออยู่ใกล้ Slenderman, ฟื้นเลือดเมื่ออยู่ไกล
+    /// </summary>
+    private void UpdateHP()
+    {
+        if (isDead) return;
+
+        if (isInStaticRange)
+        {
+            // อยู่ในระยะ static → ลดเลือด
+            currentHP -= damagePerSecond * Time.deltaTime;
+        }
+        else
+        {
+            // อยู่นอกระยะ → ฟื้นเลือด
+            currentHP += regenPerSecond * Time.deltaTime;
+        }
+
+        // จำกัดค่า HP ไม่ให้เกิน max หรือต่ำกว่า 0
+        currentHP = Mathf.Clamp(currentHP, 0f, maxHP);
+
+        // อัพเดท HP Bar UI
+        UpdateHPBar();
+
+        // เช็คตาย
+        if (currentHP <= 0f)
+        {
+            Die();
+        }
+    }
+
+    /// <summary>
+    /// อัพเดท UI แถบเลือด
+    /// </summary>
+    private void UpdateHPBar()
+    {
+        if (hpBar != null)
+        {
+            hpBar.fillAmount = currentHP / maxHP;
+        }
+    }
+
+    /// <summary>
+    /// ผู้เล่นตาย — แจ้งทุก client ผ่าน RPC
+    /// </summary>
+    private void Die()
+    {
+        isDead = true;
+        canMove = false;
+
+        // แจ้งทุก client ว่าผู้เล่นตาย
+        photonView.RPC("PlayerDiedRPC", RpcTarget.All);
+    }
+
+    [PunRPC]
+    private void PlayerDiedRPC()
+    {
+        // ซ่อน static effect
+        if (staticObject != null)
+            staticObject.SetActive(false);
+
+        // ปิดการเคลื่อนไหว
+        canMove = false;
+        isDead = true;
+
+        Debug.Log(gameObject.name + " has died!");
+
+        // TODO: เพิ่ม Game Over UI หรือ Respawn logic ตรงนี้
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)

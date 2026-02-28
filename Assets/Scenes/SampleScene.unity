@@ -551,7 +551,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: 97b0cd269422460b9c5672eb06af8f7c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 24.605
+      value: 23.05
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: 97b0cd269422460b9c5672eb06af8f7c, type: 3}
       propertyPath: m_LocalPosition.y
@@ -559,7 +559,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: 97b0cd269422460b9c5672eb06af8f7c, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 42.906
+      value: 7.31
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: 97b0cd269422460b9c5672eb06af8f7c, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2474,7 +2474,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 122ef3ae00d5c3a4785f9844c3b0df32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameLogic
-  countPage: {fileID: 0}
   pageCount: 0
 --- !u!1 &1357332119 stripped
 GameObject:
