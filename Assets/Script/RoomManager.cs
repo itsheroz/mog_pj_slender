@@ -1,44 +1,23 @@
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 using Photon.Pun;
 using Photon.Realtime;
 
 public class RoomManager : MonoBehaviourPunCallbacks
 {
     public string playerPrefabName = "Player";
-    public byte maxPlayers = 4;
-    public float spawnRadius = 3f; // รัศมีสุ่มตำแหน่ง spawn
+    public float spawnRadius = 3f;
 
     void Start()
     {
-        Debug.Log("RoomManager Start");
-        PhotonNetwork.ConnectUsingSettings();
+        // ถ้าอยู่ในห้องแล้ว (โหลดมาจาก LobbyManager) → spawn ผู้เล่น
+        if (PhotonNetwork.InRoom)
+        {
+            SpawnPlayer();
+        }
     }
 
-    public override void OnConnectedToMaster()
+    private void SpawnPlayer()
     {
-        base.OnConnectedToMaster();
-        Debug.Log("Connected to Server");
-        PhotonNetwork.JoinLobby();
-    }
-
-    public override void OnJoinedLobby()
-    {
-        base.OnJoinedLobby();
-
-        RoomOptions roomOptions = new RoomOptions();
-        roomOptions.MaxPlayers = maxPlayers;
-
-        PhotonNetwork.JoinOrCreateRoom("test", roomOptions, TypedLobby.Default);
-    }
-
-    public override void OnJoinedRoom()
-    {
-        base.OnJoinedRoom();
-        Debug.Log("Joined Room");
-
-        // สุ่มตำแหน่ง spawn เล็กน้อยเพื่อไม่ให้ผู้เล่นซ้อนกัน
         Vector3 spawnPos = new Vector3(
             Random.Range(-spawnRadius, spawnRadius),
             2f,
@@ -46,11 +25,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
         );
 
         PhotonNetwork.Instantiate(playerPrefabName, spawnPos, Quaternion.identity);
-    }
-
-    public override void OnJoinRoomFailed(short returnCode, string message)
-    {
-        base.OnJoinRoomFailed(returnCode, message);
-        Debug.LogError("Join Room Failed: " + message);
+        Debug.Log("Player spawned at: " + spawnPos);
     }
 }
