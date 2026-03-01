@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 using Photon.Pun;
 
 public class SlendermanAI : MonoBehaviourPun, IPunObservable
@@ -67,16 +68,28 @@ public class SlendermanAI : MonoBehaviourPun, IPunObservable
     private void FindNewPlayerTarget()
     {
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-        if (players.Length > 0)
+
+        // กรองเฉพาะ player ที่ยังมีชีวิตอยู่
+        List<GameObject> alivePlayers = new List<GameObject>();
+        foreach (GameObject p in players)
         {
-            int randomIndex = Random.Range(0, players.Length);
-            player = players[randomIndex].transform;
+            PlayerController pc = p.GetComponent<PlayerController>();
+            if (pc == null || !pc.IsDead)
+            {
+                alivePlayers.Add(p);
+            }
+        }
+
+        if (alivePlayers.Count > 0)
+        {
+            int randomIndex = Random.Range(0, alivePlayers.Count);
+            player = alivePlayers[randomIndex].transform;
             Debug.Log("Slenderman is now targeting: " + player.name);
         }
         else
         {
             player = null;
-            Debug.Log("Slenderman can't find any players to target.");
+            Debug.Log("Slenderman can't find any alive players to target.");
         }
     }
 

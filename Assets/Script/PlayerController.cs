@@ -6,7 +6,7 @@ using TMPro;
 using UnityEngine.UI;
 using System;
 
-public class PlayerController : MonoBehaviourPun, IPunObservable
+public class PlayerController : MonoBehaviourPun
 {
     //camera
     public Camera playerCamera;
@@ -57,10 +57,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     public Image hpBar;                     // ลาก HP Bar (UI Image, ตั้ง Image Type = Filled) จาก Player prefab เข้ามา
     private float currentHP;                 // เลือดปัจจุบัน
     private bool isDead = false;             // ตายแล้วหรือยัง
-
-    // Network sync variables
-    private Vector3 networkPosition;
-    private Quaternion networkRotation;
+    public bool IsDead { get { return isDead; } }  // ให้ script อื่นเช็คได้
 
     void Start()
     {
@@ -77,6 +74,20 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
                 cc.enabled = false;
             }
 
+            // ปิด Canvas/HUD ของ player คนอื่น (ป้องกัน UI ซ้อนทับ)
+            Canvas[] canvases = GetComponentsInChildren<Canvas>(true);
+            foreach (Canvas c in canvases)
+            {
+                c.gameObject.SetActive(false);
+            }
+
+            // ปิด AudioListener ของ player คนอื่น (ป้องกัน warning ซ้ำ)
+            AudioListener[] listeners = GetComponentsInChildren<AudioListener>(true);
+            foreach (AudioListener al in listeners)
+            {
+                al.enabled = false;
+            }
+
             return;
         }
 
@@ -90,8 +101,19 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
             defaultFOV = playerCamera.fieldOfView;
         }
 
-        networkPosition = transform.position;
-        networkRotation = transform.rotation;
+        // ลบ AudioListener ตัวเกินทั้งหมด (เช่น ของ BGMPlayer)
+        // เหลือแค่ตัวที่อยู่บนกล้องของเราเท่านั้น
+        AudioListener myListener = playerCamera != null ? playerCamera.GetComponent<AudioListener>() : null;
+        AudioListener[] allListeners = FindObjectsByType<AudioListener>(FindObjectsSortMode.None);
+        foreach (AudioListener al in allListeners)
+        {
+            if (al != myListener)
+            {
+                Destroy(al);
+            }
+        }
+
+
 
         // ซ่อน static effect ตอนเริ่มเกม
         if (staticObject != null)
@@ -107,12 +129,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
     void Update()
     {
-        if (!photonView.IsMine)
-        {
-            transform.position = Vector3.Lerp(transform.position, networkPosition, Time.deltaTime * 10f);
-            transform.rotation = Quaternion.Lerp(transform.rotation, networkRotation, Time.deltaTime * 10f);
-            return;
-        }
+        if (!photonView.IsMine) return;
 
         // ถ้าตายแล้วไม่ทำอะไร
         if (isDead) return;
@@ -152,7 +169,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
             transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * lookSpeed, 0);
         }
 
-        // === Zoom ===
+        // === Zoom (กดค้าง = zoom, ปล่อย = หยุด) ===
         if (Input.GetButtonDown("Fire2"))
         {
             isZooming = true;
@@ -316,19 +333,5 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         Debug.Log(gameObject.name + " has died!");
 
         // TODO: เพิ่ม Game Over UI หรือ Respawn logic ตรงนี้
-    }
-
-    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-    {
-        if (stream.IsWriting)
-        {
-            stream.SendNext(transform.position);
-            stream.SendNext(transform.rotation);
-        }
-        else
-        {
-            networkPosition = (Vector3)stream.ReceiveNext();
-            networkRotation = (Quaternion)stream.ReceiveNext();
-        }
     }
 }

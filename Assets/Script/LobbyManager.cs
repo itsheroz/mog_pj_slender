@@ -39,7 +39,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     {
         // แสดง loading ตอนเริ่ม
         ShowPanel(loadingPanel);
-        SetStatus("กำลังเชื่อมต่อ...");
+        SetStatus("Loading . . .");
 
         // เชื่อมต่อ Photon
         PhotonNetwork.ConnectUsingSettings();
@@ -47,19 +47,19 @@ public class LobbyManager : MonoBehaviourPunCallbacks
 
     public override void OnConnectedToMaster()
     {
-        SetStatus("เชื่อมต่อสำเร็จ!");
+        SetStatus("Connected!");
         PhotonNetwork.JoinLobby();
     }
 
     public override void OnJoinedLobby()
     {
-        SetStatus("พร้อมเล่น!");
+        SetStatus("Ready!");
         ShowPanel(mainPanel); // แสดงหน้าแรก
     }
 
     public override void OnDisconnected(DisconnectCause cause)
     {
-        SetStatus("ขาดการเชื่อมต่อ: " + cause.ToString());
+        SetStatus("Disconnected: " + cause.ToString());
         ShowPanel(mainPanel);
     }
 
@@ -102,7 +102,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     public void OnRandomRoomButton()
     {
         ShowPanel(loadingPanel);
-        SetStatus("กำลังหาห้อง...");
+        SetStatus("Finding Room...");
         PhotonNetwork.JoinRandomRoom();
     }
 
@@ -148,7 +148,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         options.MaxPlayers = maxPlayers;
 
         ShowPanel(loadingPanel);
-        SetStatus("กำลังสร้างห้อง...");
+        SetStatus("Creating Room...");
 
         PhotonNetwork.CreateRoom(roomName, options, TypedLobby.Default);
     }
@@ -228,7 +228,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     private void JoinSelectedRoom(string roomName)
     {
         ShowPanel(loadingPanel);
-        SetStatus("กำลังเข้าห้อง...");
+        SetStatus("Joining Room...");
         PhotonNetwork.JoinRoom(roomName);
     }
 
@@ -238,26 +238,26 @@ public class LobbyManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        SetStatus("เข้าห้องสำเร็จ! กำลังโหลดเกม...");
+        SetStatus("Joined Room! Loading...");
         PhotonNetwork.LoadLevel(gameSceneName);
     }
 
     public override void OnCreateRoomFailed(short returnCode, string message)
     {
-        SetStatus("สร้างห้องไม่สำเร็จ: " + message);
+        SetStatus("Create Room Failed: " + message);
         ShowPanel(createRoomPanel);
     }
 
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
-        SetStatus("เข้าห้องไม่สำเร็จ: " + message);
+        SetStatus("Join Room Failed: " + message);
         ShowPanel(roomPanel);
     }
 
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
         // ไม่มีห้องว่าง → สร้างห้องใหม่อัตโนมัติ
-        SetStatus("ไม่พบห้องว่าง กำลังสร้างห้องใหม่...");
+        SetStatus("No Room Found, Creating Room...");
         string roomName = "Room_" + Random.Range(1000, 9999);
         RoomOptions options = new RoomOptions();
         options.MaxPlayers = 4;
