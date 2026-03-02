@@ -113,8 +113,6 @@ public class PlayerController : MonoBehaviourPun
             }
         }
 
-
-
         // ซ่อน static effect ตอนเริ่มเกม
         if (staticObject != null)
         {
@@ -125,6 +123,13 @@ public class PlayerController : MonoBehaviourPun
         currentHP = maxHP;
         isDead = false;
         UpdateHPBar();
+
+        // ซ่อน model ของตัวเอง (ไม่เห็นตัวเอง แต่คนอื่นยังเห็นเรา)
+        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+        foreach (Renderer r in renderers)
+        {
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
+        }
     }
 
     void Update()
