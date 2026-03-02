@@ -8,6 +8,7 @@ public class DeathScreenManager : MonoBehaviour
 
     [Header("UI")]
     public GameObject deathPanel;  // ลาก Death Panel เข้ามา
+    public GameObject completePanel; // ลาก Complete Panel (ชนะรวบรวม 8 หน้า) เข้ามา
 
     [Header("Settings")]
     public string lobbySceneName = "LobbyScene";  // ชื่อ Lobby Scene
@@ -16,9 +17,9 @@ public class DeathScreenManager : MonoBehaviour
     {
         Instance = this;
 
-        // ซ่อน death panel ตอนเริ่ม
-        if (deathPanel != null)
-            deathPanel.SetActive(false);
+        // ซ่อน panel ตอนเริ่ม
+        if (deathPanel != null) deathPanel.SetActive(false);
+        if (completePanel != null) completePanel.SetActive(false);
     }
 
     /// <summary>
@@ -28,6 +29,19 @@ public class DeathScreenManager : MonoBehaviour
     {
         if (deathPanel != null)
             deathPanel.SetActive(true);
+
+        // ปลดล็อคเคอร์เซอร์
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    /// <summary>
+    /// เรียกตอนเก็บครบ 8 หน้า → แสดง win screen
+    /// </summary>
+    public void ShowCompleteScreen()
+    {
+        if (completePanel != null)
+            completePanel.SetActive(true);
 
         // ปลดล็อคเคอร์เซอร์
         Cursor.lockState = CursorLockMode.None;

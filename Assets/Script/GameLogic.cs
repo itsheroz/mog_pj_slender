@@ -40,6 +40,8 @@ public class GameLogic : MonoBehaviourPunCallbacks
             props[PAGE_COUNT_KEY] = pageCount;
             PhotonNetwork.CurrentRoom.SetCustomProperties(props);
         }
+
+        CheckWinCondition();
     }
 
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
@@ -47,6 +49,23 @@ public class GameLogic : MonoBehaviourPunCallbacks
         if (propertiesThatChanged.ContainsKey(PAGE_COUNT_KEY))
         {
             pageCount = (int)propertiesThatChanged[PAGE_COUNT_KEY];
+            CheckWinCondition();
+        }
+    }
+
+    private void CheckWinCondition()
+    {
+        if (pageCount >= 8)
+        {
+            Debug.Log("All 8 pages collected! You Win!");
+
+            // หยุดเกม เลิกขยับ
+            Time.timeScale = 0f;
+
+            if (DeathScreenManager.Instance != null)
+            {
+                DeathScreenManager.Instance.ShowCompleteScreen();
+            }
         }
     }
 }
