@@ -125,9 +125,14 @@ public class PlayerController : MonoBehaviourPun
         UpdateHPBar();
 
         // ซ่อน model ของตัวเอง (ไม่เห็นตัวเอง แต่คนอื่นยังเห็นเรา)
+        // ข้าม staticObject เพื่อให้ยังเห็น static effect ได้
         Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
         foreach (Renderer r in renderers)
         {
+            // ข้าม renderer ที่อยู่ใน staticObject (ป้องกัน static effect หาย)
+            if (staticObject != null && r.transform.IsChildOf(staticObject.transform)) continue;
+            if (staticObject != null && r.gameObject == staticObject) continue;
+
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
         }
     }
@@ -337,6 +342,11 @@ public class PlayerController : MonoBehaviourPun
 
         Debug.Log(gameObject.name + " has died!");
 
-        // TODO: เพิ่ม Game Over UI หรือ Respawn logic ตรงนี้
+        // แสดง Death Screen เฉพาะ local player ที่ตาย
+        if (photonView.IsMine)
+        {
+            if (DeathScreenManager.Instance != null)
+                DeathScreenManager.Instance.ShowDeathScreen();
+        }
     }
 }

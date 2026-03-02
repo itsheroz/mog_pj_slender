@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 203705239029558328}
   - component: {fileID: 8324126626020476400}
   - component: {fileID: 3330458186413874176}
+  - component: {fileID: 415181184218730408}
   m_Layer: 0
   m_Name: Page2
   m_TagString: Untagged
@@ -28,7 +29,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 658203600064276889}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -2.06193, y: -0.96868, z: -0.018070221}
   m_LocalScale: {x: 0.72119, y: 0.89724, z: 0.02}
   m_ConstrainProportionsScale: 0
@@ -125,5 +126,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e38284421e66e9439966a8a66a9a505, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollectPage
-  collectText: {fileID: 0}
-  collectSound: {fileID: 0}
+  collectSound: {fileID: 8300000, guid: f1d330d71bc631e41abe5dbceffbe572, type: 3}
+--- !u!114 &415181184218730408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 658203600064276889}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
